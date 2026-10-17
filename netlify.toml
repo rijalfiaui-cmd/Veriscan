@@ -1,27 +1,11 @@
 [build]
   base    = "frontend"
-  command = "npm run build"
+  command = "node scripts/netlify-build.mjs"
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
+  VITE_API_URL = "/api/v1"
 
-# Proxy /api/* and /uploads/* calls to the Railway backend
-# Set RAILWAY_BACKEND_URL in Netlify environment variables
-[[redirects]]
-  from   = "/api/*"
-  to     = ":RAILWAY_BACKEND_URL/api/:splat"
-  status = 200
-  force  = true
-
-[[redirects]]
-  from   = "/uploads/*"
-  to     = ":RAILWAY_BACKEND_URL/uploads/:splat"
-  status = 200
-  force  = true
-
-# SPA fallback — all other routes → index.html (React Router)
-[[redirects]]
-  from   = "/*"
-  to     = "/index.html"
-  status = 200
+# scripts/netlify-build.mjs generates dist/_redirects using
+# RAILWAY_BACKEND_URL, followed by the React Router fallback.

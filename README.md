@@ -2,6 +2,53 @@
 
 Aplikasi absensi siswa berbasis QR Code yang dapat diakses melalui browser HP Android.
 
+## Deploy ke Netlify
+
+Frontend berjalan di Netlify. Backend NestJS, PostgreSQL, dan penyimpanan foto
+tetap berjalan di Railway (konfigurasi tersedia di `backend/railway.toml`).
+Backend saat ini menyimpan foto ke disk, sehingga tidak dapat dipindahkan langsung
+ke Netlify Functions tanpa perubahan penyimpanan dan entry point server.
+
+1. Push repository ini ke GitHub.
+2. Buat service Railway dari repository, dengan root directory `/backend` dan
+   config file `/backend/railway.toml`. Tambahkan PostgreSQL dan set variabel backend:
+   - `DATABASE_URL`: koneksi PostgreSQL dari service database.
+   - `JWT_SECRET`: secret acak yang kuat (buat dengan `openssl rand -hex 32`).
+   - `JWT_EXPIRES_IN`: `24h`.
+   - `FRONTEND_URL`: origin situs Netlify, misalnya `https://nama-situs.netlify.app`.
+   - `UPLOAD_DIR`: `/data/uploads`.
+   Pasang volume persisten pada `/data`, lalu aktifkan public HTTPS domain backend.
+   Railway menjalankan migrasi sebelum deployment; Prisma client dibuat sebelum build.
+   Untuk database lama tanpa riwayat migrasi, ikuti bagian baseline di bawah terlebih dahulu.
+3. Di Netlify, import repository tersebut. `netlify.toml` mengatur base directory
+   `frontend`, build command `node scripts/netlify-build.mjs`, publish directory
+   `dist` (relatif terhadap base), dan Node.js 22.
+4. Tambahkan environment variable Netlify `RAILWAY_BACKEND_URL` dengan origin backend,
+   misalnya `https://nama-api.up.railway.app`, tanpa `/api/v1`. Variabel ini harus
+   tersedia saat build. Jangan masukkan `DATABASE_URL` atau `JWT_SECRET` ke frontend.
+5. Deploy. Script build menggunakan `VITE_API_URL=/api/v1` dan menghasilkan proxy
+   `/api/*` serta `/uploads/*` sebelum fallback React Router. Tidak perlu mengatur
+   URL backend dalam source code. Jika URL backend berubah, deploy ulang frontend.
+6. Pastikan `FRONTEND_URL` backend sesuai URL Netlify final. Periksa login, refresh
+   halaman `/login`, scan kamera via HTTPS, serta upload dan tampilan foto.
+
+`backend/prisma/seed.ts` menghapus data dan membuat akun dengan password demo.
+Jangan jalankan seed pada database production yang sudah berisi data. Seed hanya
+untuk database demo yang boleh dihapus; akun production perlu password unik dan
+hash bcrypt pada tabel `staff`.
+
+Verifikasi build lokal (URL contoh hanya untuk memeriksa build, bukan API aktif):
+
+```bash
+cd frontend
+npm ci
+RAILWAY_BACKEND_URL=https://nama-api.up.railway.app node scripts/netlify-build.mjs
+```
+
+Referensi: [Netlify redirects](https://docs.netlify.com/manage/routing/redirects/overview/),
+[Railway pre-deploy](https://docs.railway.com/deployments/pre-deploy-command),
+dan [Railway volumes](https://docs.railway.com/volumes).
+
 ## 🏗️ Struktur Project
 
 ```
