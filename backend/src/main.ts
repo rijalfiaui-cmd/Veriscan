@@ -25,9 +25,10 @@ async function bootstrap() {
     prefix: '/uploads',
   });
 
-  // CORS
+  // CORS — restrict to FRONTEND_URL in production, allow all in dev
+  const frontendUrl = process.env.FRONTEND_URL;
   app.enableCors({
-    origin: true,
+    origin: frontendUrl ? frontendUrl.split(',').map((u) => u.trim()) : true,
     credentials: true,
   });
 

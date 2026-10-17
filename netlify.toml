@@ -1,0 +1,27 @@
+[build]
+  base    = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Proxy /api/* and /uploads/* calls to the Railway backend
+# Set RAILWAY_BACKEND_URL in Netlify environment variables
+[[redirects]]
+  from   = "/api/*"
+  to     = ":RAILWAY_BACKEND_URL/api/:splat"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/uploads/*"
+  to     = ":RAILWAY_BACKEND_URL/uploads/:splat"
+  status = 200
+  force  = true
+
+# SPA fallback — all other routes → index.html (React Router)
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
