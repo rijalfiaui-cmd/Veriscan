@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  LAKI_LAKI
+  PEREMPUAN
+}
+
+enum AttendanceStatus {
+  HADIR
+}
+
+model Student {
+  id               String       @id @default(uuid())
+  nisn             String       @unique
+  name             String
+  schoolName       String
+  gender           Gender
+  foodRestrictions String?
+  photoPath        String?
+  qrToken          String       @unique @default(uuid())
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  attendances      Attendance[]
+
+  @@index([nisn])
+  @@index([qrToken])
+  @@map("students")
+}
+
+model Beneficiary3B {
+  id               String       @id @default(uuid())
+  name             String
+  nik              String       @unique
+  street           String
+  rt               String
+  rw               String
+  kelurahan        String
+  kecamatan        String
+  city             String
+  province         String
+  postalCode       String
+  foodRestrictions String?
+  decile           Int
+  photoPath        String?
+  qrToken          String       @unique @default(uuid())
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  attendances      Attendance[]
+
+  @@map("beneficiaries_3b")
+}
+
+model Staff {
+  id          String       @id @default(uuid())
+  username    String       @unique
+  name        String
+  password    String
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  attendances Attendance[]
+
+  @@index([username])
+  @@map("staff")
+}
+
+model Attendance {
+  id              String           @id @default(uuid())
+  studentId       String?
+  beneficiary3BId String?
+  staffId         String
+  attendanceDate  DateTime         @db.Date
+  scannedAt       DateTime
+  status          AttendanceStatus @default(HADIR)
+
+  student       Student?       @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  beneficiary3B Beneficiary3B? @relation(fields: [beneficiary3BId], references: [id], onDelete: Restrict)
+  staff         Staff          @relation(fields: [staffId], references: [id])
+
+  @@unique([studentId, attendanceDate])
+  @@unique([beneficiary3BId, attendanceDate])
+  @@index([beneficiary3BId])
+  @@index([attendanceDate])
+  @@index([studentId])
+  @@map("attendances")
+}
